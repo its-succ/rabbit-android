@@ -2,6 +2,8 @@ package com.github.its_succ.rabbit;
 
 import android.content.Intent;
 import android.nfc.NfcAdapter;
+import android.nfc.Tag;
+import android.nfc.tech.NfcA;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -22,12 +24,11 @@ public class MainActivity extends ActionBarActivity {
         if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
                 ||  NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)
                 ||  NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)) {
-
-            String idm = getIdm(getIntent());
-            if (idm != null) {
-                TextView idmView = (TextView) findViewById(R.id.idm);
-                idmView.setText("onCreate : " + action  + ":" + idm);
-            }
+            TextView idmView = (TextView) findViewById(R.id.idm);
+            idmView.setText("onCreate:"
+                    + action + "\n"
+                    + getIdm(getIntent()) + "\n"
+                    + getIdmFromTag(intent));
         }
     }
 
@@ -46,11 +47,11 @@ public class MainActivity extends ActionBarActivity {
         if (NfcAdapter.ACTION_NDEF_DISCOVERED.equals(action)
                 ||  NfcAdapter.ACTION_TECH_DISCOVERED.equals(action)
                 ||  NfcAdapter.ACTION_TAG_DISCOVERED.equals(action)) {
-            String idm = getIdm(getIntent());
-            if (idm != null) {
-                TextView idmView = (TextView) findViewById(R.id.idm);
-                idmView.setText("onNewIntent : " + action  + ":" + idm);
-            }
+            TextView idmView = (TextView) findViewById(R.id.idm);
+            idmView.setText("onNewIntent:"
+                    + action + "\n"
+                    + getIdm(getIntent()) + "\n"
+                    + getIdmFromTag(intent));
         }
     }
 
@@ -60,16 +61,28 @@ public class MainActivity extends ActionBarActivity {
      * @return IDm文字列
      */
     private String getIdm(Intent intent) {
-        String idm = null;
-        StringBuffer idmByte = new StringBuffer();
         byte[] rawIdm = intent.getByteArrayExtra(NfcAdapter.EXTRA_ID);
-        if (rawIdm != null) {
-            for (int i = 0; i < rawIdm.length; i++) {
-                idmByte.append(Integer.toHexString(rawIdm[i] & 0xff));
-            }
-            idm = idmByte.toString();
+        return toHexString(rawIdm);
+    }
+
+    private String getIdmFromTag(Intent intent) {
+        Tag tag = (Tag) intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+        if (tag == null) {
+            return null;
         }
-        return idm;
+        byte[] rawIdm = tag.getId();
+        return toHexString(rawIdm);
+    }
+
+    private String toHexString(byte[] rawIdm) {
+        if (rawIdm == null) {
+            return null;
+        }
+        StringBuffer idmByte = new StringBuffer();
+        for (int i = 0; i < rawIdm.length; i++) {
+            idmByte.append(Integer.toHexString(rawIdm[i] & 0xff));
+        }
+        return idmByte.toString();
     }
 
     @Override
